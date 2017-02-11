@@ -59,10 +59,10 @@ def _get_html_page(prefix_url, suffix_url):
     soup = BeautifulSoup(my_page, "html.parser")
 
     # 解析当前网页的信息
-    curent_page_info = _parse_page_info(soup)
+    current_page_info = _parse_page_info(soup)
 
     # 将当前的信息
-    my_page_info += curent_page_info
+    my_page_info += current_page_info
 
     # 获得下一页的后缀
     new_suffix_url = _get_next_page_suffix(soup)
