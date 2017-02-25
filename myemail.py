@@ -23,6 +23,7 @@ class MyEmail:
 
         try:
             self.host.sendmail(self.user_name, to, msg.as_string())
+            print("send email success to %s" % to)
         except smtplib.SMTPException, e:
             print "Falied,%s" % e
 
