@@ -4,7 +4,8 @@ from absspider import AbsUlrCollector, AbsContexParse
 from mymongodb import MyMongoDb
 import jieba.posseg as fenci
 
-class JobInfoUrlCollector(AbsUlrCollector):
+
+class GaoxiaoJobInfoUrlCollector(AbsUlrCollector):
     def __init__(self, db_name, cellection_name):
         self.db = MyMongoDb(db_name, cellection_name)
 
@@ -66,7 +67,7 @@ if __name__ == '__main__':
     db_name = 'jbDb'
     cellection_name = 'info_url'
 
-    jobInfoUrl = JobInfoUrlCollector(db_name, cellection_name)
+    jobInfoUrl = GaoxiaoJobInfoUrlCollector(db_name, cellection_name)
     start_url = "http://www.gaoxiaojob.com/zhaopin/chengshi/shenzhen/"
     jobInfoUrl.get_url_list(start_url)
 

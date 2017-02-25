@@ -8,7 +8,6 @@ import ConfigParser
 from os import path
 
 
-
 class MyEmail:
     def __init__(self, user_name, pwd, smtp_ssl_host='smtp.qq.com', port=465):
         self.host = smtplib.SMTP_SSL(smtp_ssl_host, port)
@@ -26,7 +25,7 @@ class MyEmail:
             print "Falied,%s" % e
 
     def send_text(self, to, title, context):
-        msg = MIMEText(context)
+        msg = MIMEText(context.encode('utf8'))
         msg["Subject"] = title
         msg["From"] = self.user_name
         msg["To"] = to

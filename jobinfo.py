@@ -1,78 +1,45 @@
 # -*- coding: utf-8 -*-
 
-import requests
-import os
-import sys
-from bs4 import BeautifulSoup
-import jieba.posseg as fenci
-
-
-def _string_list_save(save_path, filename, slist):
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
-    path = save_path + "/" + filename + ".txt"
-    with open(path, "w+") as fp:
-        for s in slist:
-            fp.write("%s\t\t%s\n" % (s['title'].encode("utf8"), s['url'].encode("utf8")))
-
-
-def _get_page_info(soup):
-    my_page_info = []
-    class_types = ['style2 stylebg','style2']
-    for class_type in class_types:
-        for tag in soup.find_all('div', class_=class_type):
-            title = tag.span.a.getText()
-            print title
-            url = tag.span.a['href']
-            item = {'title':title, 'url':url}
-            my_page_info.append(item)
-    return my_page_info
-
-
-def _get_next_page_suffix(soup):
-    suffix_url = ''
-    next_page_tag = soup.find_all('a', class_='next')
-    if len(next_page_tag) == 1:
-        suffix_url = next_page_tag[0]['href']
-
-    return suffix_url
-
-
-def _get_movie_list(prefix_url, suffix_url):
-    my_page_info = []
-    url = prefix_url + suffix_url
-    print("downloading...%s" % url)
-    my_page = requests.get(url).content
-    soup = BeautifulSoup(my_page, "html.parser", from_encoding='gb18030')
-    my_page_info += _get_page_info(soup)
-
-    new_suffix_url = _get_next_page_suffix(soup)
-    if new_suffix_url != '':
-        my_page_info += _get_movie_list(prefix_url, new_suffix_url)
-
-    return my_page_info
-
-
-def spider(url, save_path, filename):
-    movie_info_list = _get_movie_list(url, "")
-    save_infos = []
-    key_words = [u'生物', u'生命科学', u'生物医学工程', u'生物医学光子学', u'光学']
-    for item in movie_info_list:
-        print 'search', item['title']
-        job_detail = requests.get(item['url']).content
-        soup = BeautifulSoup(job_detail, "html.parser", from_encoding='gb18030')
-        context = soup.find('div', class_='article_body').getText()
-        words = fenci.cut(context)
-        for w in words:
-            if w.word in key_words:
-                save_infos.append(item)
-                break
-
-    _string_list_save(save_path, filename, save_infos)
-
+from gaoxiaojob import GaoxiaoContexParse
+from gaoxiaojob import GaoxiaoJobInfoUrlCollector
+from myemail import MyEmail
+import ConfigParser
+import time
 
 if __name__ == '__main__':
-    print "start"
+    db_name = 'jbDb'
+    cellection_name = 'info_url'
+
+    #  从网站获取需要抓取的url
+    jobInfoUrl = GaoxiaoJobInfoUrlCollector(db_name, cellection_name)
     start_url = "http://www.gaoxiaojob.com/zhaopin/chengshi/shenzhen/"
-    spider(start_url, "/home/transfer/netspider", "douban")
-    print "end dd"
+    jobInfoUrl.get_url_list(start_url)
+
+    key_words = [u'生物', u'生命科学', u'生物医学工程', u'生物医学光子学']
+    parse = GaoxiaoContexParse(db_name, cellection_name, key_words)
+
+    # 解析有用的网页
+    context = ''
+    times = 0
+    for item in jobInfoUrl.get_urls():
+        times += 1
+        if times % 100 == 0:
+            break
+        else:
+            print '.',
+        if parse.analysis_page(item['url']):
+            print('find %s\n' % item['title'])
+            context += ('%s\n%s\n\n' % (item['title'], item['url']))
+
+    config = ConfigParser.ConfigParser()
+    config.read("email.ini")
+    user_name = config.get('host', 'user_name')
+    pwd = config.get('host', 'pwd')
+    host_name = config.get('host', 'host_name')
+    port = config.getint('host', 'port')
+
+    # 将获取的信息通过邮件发送出去
+    email = MyEmail(user_name, pwd, host_name, port)
+    to = '448217518@qq.com'
+    title = 'job info ' + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+    email.send_text(to, title, context)
