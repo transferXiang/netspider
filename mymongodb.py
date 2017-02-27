@@ -23,6 +23,9 @@ class MyMongoDb:
     def find(self,):
         return self.collection.find()
 
+    def find_one_and_update(self, filter, update):
+        self.collection.find_one_and_update(filter, {'$set': update})
+
 
 if __name__ == "__main__":
     db = MyMongoDb("Test", "myCollection")

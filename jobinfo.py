@@ -21,25 +21,25 @@ if __name__ == '__main__':
     # 解析有用的网页
     context = ''
     times = 0
-    for item in jobInfoUrl.get_urls():
+    infos = jobInfoUrl.get_urls()
+    for item in infos:
         times += 1
-        if times % 100 == 0:
-            break
-        else:
-            print '.',
+        print times
+
         if parse.analysis_page(item['url']):
             print('find %s\n' % item['title'])
             context += ('%s\n%s\n\n' % (item['title'], item['url']))
 
-    config = ConfigParser.ConfigParser()
-    config.read("email.ini")
-    user_name = config.get('host', 'user_name')
-    pwd = config.get('host', 'pwd')
-    host_name = config.get('host', 'host_name')
-    port = config.getint('host', 'port')
+    if context != '':
+        config = ConfigParser.ConfigParser()
+        config.read("email.ini")
+        user_name = config.get('host', 'user_name')
+        pwd = config.get('host', 'pwd')
+        host_name = config.get('host', 'host_name')
+        port = config.getint('host', 'port')
 
-    # 将获取的信息通过邮件发送出去
-    email = MyEmail(user_name, pwd, host_name, port)
-    to = '448217518@qq.com'
-    title = 'job info ' + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
-    email.send_text(to, title, context)
+        # 将获取的信息通过邮件发送出去
+        email = MyEmail(user_name, pwd, host_name, port)
+        to = '448217518@qq.com'
+        title = 'job info ' + time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+        email.send_text(to, title, context)

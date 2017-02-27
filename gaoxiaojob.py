@@ -6,8 +6,8 @@ import jieba.posseg as fenci
 
 
 class GaoxiaoJobInfoUrlCollector(AbsUlrCollector):
-    def __init__(self, db_name, cellection_name):
-        self.db = MyMongoDb(db_name, cellection_name)
+    def __init__(self, db_name, collection_name):
+        self.db = MyMongoDb(db_name, collection_name)
 
     def get_next_page_suffix(self, soup):
         suffix_url = ''
@@ -23,39 +23,42 @@ class GaoxiaoJobInfoUrlCollector(AbsUlrCollector):
             for tag in soup.find_all('div', class_=class_type):
                 title = tag.span.a.getText()
                 url = tag.span.a['href']
-                item = {'title': title, 'url': url}
+                item = {'title': title, 'url': url, 'processed': False}
                 page_info.append(item)
         return page_info
 
     def save_page_info(self, info):
         for info_item in info:
-            if not self.db.contians(info_item['url']):
+            if not self.db.contians({'url': info_item['url']}):
+                print 'insert:' + info_item['title']
                 self.db.insert(info_item)
 
     def get_urls(self):
-        return self.db.find()
+        return self.db.collection.find({'processed': False})
 
 
 class GaoxiaoContexParse(AbsContexParse):
-    def __init__(self, db_name, cellection_name, include_key_words):
-        self.db = MyMongoDb(db_name, cellection_name)
+    def __init__(self, db_name, collection_name, include_key_words):
+        self.db = MyMongoDb(db_name, collection_name)
         self.include_key_words = include_key_words
 
     def get_context(self, soup):
         return soup.find('div', class_='article_body').getText()
 
-    def process_context(self, context):
+    def process_context(self, url, context):
+        self.db.find_one_and_update({'url': url}, {'processed': True})
+
         words = fenci.cut(context)
 
-        mached_kes = []
+        matched_kes = []
         for w in words:
             if w.word in self.include_key_words:
-                if w.word not in mached_kes:
-                    mached_kes.append(w.word)
+                if w.word not in matched_kes:
+                    matched_kes.append(w.word)
 
-        if len(mached_kes) > 0:
+        if len(matched_kes) > 0:
             print '\nmatch key',
-            for word in mached_kes:
+            for word in matched_kes:
                 print word,
             print ''
             return True
@@ -65,14 +68,14 @@ class GaoxiaoContexParse(AbsContexParse):
 
 if __name__ == '__main__':
     db_name = 'jbDb'
-    cellection_name = 'info_url'
+    collection_name = 'info_url'
 
-    jobInfoUrl = GaoxiaoJobInfoUrlCollector(db_name, cellection_name)
+    jobInfoUrl = GaoxiaoJobInfoUrlCollector(db_name, collection_name)
     start_url = "http://www.gaoxiaojob.com/zhaopin/chengshi/shenzhen/"
     jobInfoUrl.get_url_list(start_url)
 
     key_words = [u'生物', u'生命科学', u'生物医学工程', u'生物医学光子学']
-    parse = GaoxiaoContexParse(db_name, cellection_name, key_words)
+    parse = GaoxiaoContexParse(db_name, collection_name, key_words)
 
     times = 0
     for item in jobInfoUrl.get_urls():

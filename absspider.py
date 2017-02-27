@@ -34,7 +34,7 @@ class AbsContexParse:
     def get_context(self, soup):
         return ''
 
-    def process_context(self, context):
+    def process_context(self, url, context):
         return ''
 
     def analysis_page(self, url, builder='html.parser', encoding='gb18030'):
@@ -43,7 +43,7 @@ class AbsContexParse:
 
         context = self.get_context(soup)
 
-        return self.process_context(context)
+        return self.process_context(url, context)
 
 
 if __name__ == '__main__':
