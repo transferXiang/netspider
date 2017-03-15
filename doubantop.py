@@ -83,5 +83,5 @@ def spider(url, save_path, filename):
 if __name__ == '__main__':
     print "start"
     start_url = "https://movie.douban.com/top250"
-    spider(start_url, "/home/transfer/netspider", "douban_top250.txt")
+    spider(start_url, "./", "douban_top250.txt")
     print "end"
