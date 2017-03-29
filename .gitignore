@@ -5,6 +5,7 @@ __pycache__/
 
 # private file
 email.ini
+.idea/
 
 # C extensions
 *.so
