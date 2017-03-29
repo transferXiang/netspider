@@ -3,18 +3,17 @@
 
 import requests
 import os
-import sys
 from bs4 import BeautifulSoup
 
 
 # 将解析到的文件保存到文件中
-def _string_list_save(save_path, filename, slist):
+def _string_list_save(save_path, filename, movie_info_list):
     if not os.path.exists(save_path):
         os.makedirs(save_path)
     path = save_path + "/" + filename
-    with open(path, "w+") as fp:
-        for s in slist:
-            fp.write("%s\t\t%s\n" % (s['rank'].encode("utf8"), s['name'].encode("utf8")))
+    with open(path, "w+", encoding="utf-8") as fp:
+        for movie_info in movie_info_list:
+            fp.write("%s\t\t%s\n" % (movie_info['rank'], movie_info['name']))
 
 
 # 解析界面
@@ -81,7 +80,7 @@ def spider(url, save_path, filename):
 
 
 if __name__ == '__main__':
-    print "start"
+    print("start")
     start_url = "https://movie.douban.com/top250"
     spider(start_url, "./", "douban_top250.txt")
-    print "end"
+    print("end")

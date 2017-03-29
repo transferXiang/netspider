@@ -5,6 +5,7 @@ __pycache__/
 
 # private file
 email.ini
+douban_top250.txt
 .idea/
 
 # C extensions
