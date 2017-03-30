@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
+#! /usr/bin/env python3
 
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
-import ConfigParser
+import configparser
 from os import path
 
 
@@ -15,27 +15,42 @@ class MyEmail:
         self.user_name = user_name
 
     def __del__(self):
-        self.host.quit()
+        self.host.close()
 
-    def _sendemail(self, user_name, to, msg):
+    def _send_email(self, user_name, to, msg):
         try:
             self.host.sendmail(user_name, to, msg.as_string())
             print("send email success to %s" % to)
-        except smtplib.SMTPException, e:
-            print "Falied,%s" % e
+        except smtplib.SMTPException as e:
+            print("failed :%s" % e)
 
-    def send_text(self, to, title, context):
-        msg = MIMEText(context.encode('utf8'))
+    def send_text(self, email_addr, title, context):
+        '''
+        发送普通文本邮件
+        :param email_addr: 邮件地址
+        :param title: 邮件标题
+        :param context: 内容
+        :return: none
+        '''
+        msg = MIMEText(context)
         msg["Subject"] = title
         msg["From"] = self.user_name
-        msg["To"] = to
-        self._sendemail(self.user_name, to, msg)
+        msg["To"] = email_addr
+        self._send_email(self.user_name, email_addr, msg)
 
-    def send_files(self, to, title, context, file_paths):
+    def send_files(self, email_addrs, title, context, file_paths):
+        '''
+        发送带附件的邮件
+        :param email_addrs: 邮件地址
+        :param title: 邮件标题
+        :param context: 邮件内容
+        :param file_paths: 文件路径（list）
+        :return: none
+        '''
         msg = MIMEMultipart()
         msg["Subject"] = title
         msg["From"] = self.user_name
-        msg["To"] = to
+        msg["To"] = email_addrs
 
         # 文字部分(邮件主体)
         text_part = MIMEText(context)
@@ -50,24 +65,25 @@ class MyEmail:
                 part.add_header('Content-Disposition', 'attachment', filename=file_name)
                 msg.attach(part)
 
-        self._sendemail(self.user_name, to, msg)
+        self._send_email(self.user_name, email_addrs, msg)
 
 
 if __name__ == '__main__':
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read("email.ini")
-    user_name = config.get('host', 'user_name')
-    pwd = config.get('host', 'pwd')
-    host_name = config.get('host', 'host_name')
-    port = config.getint('host', 'port')
+    section_name = 'host'
+    user_name = config.get(section_name, 'user_name')
+    pwd = config.get(section_name, 'pwd')
+    host_name = config.get(section_name, 'host_name')
+    port = config.getint(section_name, 'port')
 
     email = MyEmail(user_name, pwd, host_name, port)
 
     # 发送普通邮件
-    to = '448217518@qq.com'
-    email.send_text(to, 'text email test', 'hellow world')
+    to = config.get(section_name, 'send_to')
+    email.send_text(to, '这是一封文本测试邮件', '你好')
 
     # 发送附件
     file_paths = ['./myemail.py', './mymongodb.py']
-    email.send_files(to, 'attachment email test', '请看附件', file_paths)
+    email.send_files(to, '这是一封附件测试邮件', '请看附件', file_paths)
 
